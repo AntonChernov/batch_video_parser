@@ -188,7 +188,7 @@ if __name__ == '__main__':
         dest="batchsize",
         default=1,
     )
-    parser.add_argument('-l', '--logfile', action="store", dest="logfile", required=True)
+    parser.add_argument('-l', '--logfile', action="store", dest="logfile")
     arguments = parser.parse_args()
     if arguments.logfile:
         log = logger_init(file=pth.Path(arguments.logfile))
