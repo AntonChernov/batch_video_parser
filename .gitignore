@@ -1,0 +1,7 @@
+.python-version
+YOLOBatchProcessing/
+.idea/
+07_20200720135959_20200720145957.asf
+
+*.log
+*__pycache__/
