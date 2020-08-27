@@ -7,11 +7,10 @@ import pathlib as pth
 
 def chek_or_create_path(file: typ.Union[str, pth.Path]) -> typ.Union[pth.Path, str]:
     f = file if isinstance(file, pth.Path) else pth.Path(file)
-    if os.path.exists(f):
-        return f
-    else:
-        os.makedirs(os.path.splitext(f.name)[0])
-        return f
+    dirs_pth = str(f).split(f.name)[0]
+    if not os.path.exists(dirs_pth):
+        os.makedirs(dirs_pth)
+    return f
 
 
 def logger_init(file: typ.Union[str, pth.Path] = None) -> logging.Logger:
