@@ -149,7 +149,7 @@ pip install -r requirements.txt
 ```.env
 export $(grep -v '^#' .env | xargs)
 ```
-2 /darknet/cfg/coco.data names should be 'path/to/folder/darknet/data/coco.names'
+2 In file /darknet/cfg/coco.data parameter "names" should be 'path/to/folder/darknet/data/coco.names'
 
 example:
 ```
