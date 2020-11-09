@@ -166,3 +166,12 @@ python batch_video_parser.py -v /home/user/SpilnaSprava/Mollengo/07_202007201359
 -b batch size (default 1)
 -l logfile path /home/user/logfile.log
 
+4 video_batching.py New version of vodeo batching
+
+```python
+python video_batching.py -v /home/ubuntu/achernov/07_20200720135959_20200720145957.asf
+```
+
+-v videofile path
+all other inside the settings.py file
+
