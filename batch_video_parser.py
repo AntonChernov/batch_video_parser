@@ -9,8 +9,6 @@ import os
 import typing as typ
 import pathlib as pth
 
-import numpy as np
-
 import utilities.darknet as darknet
 
 from utilities.log import logger_init
@@ -176,88 +174,6 @@ class VideoParser(object):
                              detection[2][3]
                 log.info(f"Returned params --> X: {x}, Y: {y}, W: {w}, H: {h}")
         return None
-
-    def check_batch_shape(self, images, batch_size):
-        """
-            Image sizes should be the same width and height
-        """
-        shapes = [image.shape for image in images]
-        if len(set(shapes)) > 1:
-            raise ValueError("Images don't have same shape")
-        if len(shapes) > batch_size:
-            raise ValueError("Batch size higher than number of images")
-        return shapes[0]
-
-    def prepare_batch(self, images, network, channels=3):
-        width = darknet.network_width(network)
-        height = darknet.network_height(network)
-
-        darknet_images = []
-        for image in images:
-            image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            image_resized = cv2.resize(image_rgb, (width, height),
-                                       interpolation=cv2.INTER_LINEAR)
-            custom_image = image_resized.transpose(2, 0, 1)
-            darknet_images.append(custom_image)
-
-        batch_array = np.concatenate(darknet_images, axis=0)
-        batch_array = np.ascontiguousarray(batch_array.flat, dtype=np.float32) / 255.0
-        darknet_images = batch_array.ctypes.data_as(darknet.POINTER(darknet.c_float))
-        return darknet.IMAGE(width, height, channels, darknet_images)
-
-    def batch_detection(
-            self,
-            images,
-            class_names,
-            class_colors,
-            thresh=0.25,
-            hier_thresh=.5,
-            nms=.45
-    ):
-        image_height, image_width, _ = self.check_batch_shape(images, self.batch_size)
-        darknet_images = self.prepare_batch(images, self.network)
-        batch_detections = darknet.network_predict_batch(
-            self.network, darknet_images, self.batch_size,
-            image_width, image_height, thresh,
-            hier_thresh, None, 0, 0
-        )
-        batch_predictions = []
-        for idx in range(self.batch_size):
-            num = batch_detections[idx].num
-            detections = batch_detections[idx].dets
-            if nms:
-                darknet.do_nms_obj(detections, num, len(class_names), nms)
-            predictions = darknet.remove_negatives(detections, class_names, num)
-            images[idx] = darknet.draw_boxes(predictions, images[idx], class_colors)
-            batch_predictions.append(predictions)
-        darknet.free_batch_detections(batch_detections, self.batch_size)
-        return images, batch_predictions
-
-    def process_by_batches(self):
-        frames = [frame for ind, frame in self.video_frames()]
-        len_of_frames = len(frames)
-        start = 0
-        end = self.batch_size
-        count_of_iterations = math.ceil(len_of_frames/self.batch_size)
-        conf_path = os.environ.get("CONFIG_PATH")
-        weight_path = os.environ.get("WEIGHT_PATH")
-        data_file_path = os.environ.get("META_PATH")
-        network, class_names, class_colors = darknet.load_network(
-            conf_path,
-            data_file_path,
-            weight_path,
-            batch_size=self.batch_size
-        )
-        for i in range(count_of_iterations):
-
-            images, detections, = self.batch_detection(
-                self.network,
-                frames[start: end],
-                class_names,
-                class_colors,
-            )
-            print(detections)
-            log.info(f"Start to processed frame batch # {i} from {count_of_iterations}")
 
 
 if __name__ == '__main__':
