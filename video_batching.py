@@ -7,9 +7,10 @@ import os
 import cv2
 import numpy as np
 
+import settings
 from utilities import darknet
 
-BATCH_SIZE = 4
+BATCH_SIZE = settings.BATCH_SIZE
 
 
 class VideoParser(object):
@@ -19,12 +20,18 @@ class VideoParser(object):
             batch_size: int,
             video_path: str,
             thresh: float,
+            network: typ.Any,
+            class_names: typ.Any,
+            class_colors: typ.Any,
     ):
         self.batch_size = batch_size if \
             batch_size <= BATCH_SIZE else \
             BATCH_SIZE
         self.video_path = self.check_path(video_path)
         self.thresh = thresh
+        self.network = network
+        self.class_names = class_names
+        self.class_colors = class_colors
 
     @staticmethod
     def check_path(video_path: str) -> typ.Union[str, pth.Path, OSError]:
@@ -111,21 +118,12 @@ class VideoParser(object):
 
     def batch_detection_process(self):
         a = [item for item in self.read_video_file()]
-        conf_path = os.environ.get("CONFIG_PATH")
-        weight_path = os.environ.get("WEIGHT_PATH")
-        data_file_path = os.environ.get("META_PATH")
-        network, class_names, class_colors = darknet.load_network(
-            conf_path,
-            data_file_path,
-            weight_path,
-            batch_size=self.batch_size
-        )
         for i in a:
             images, detections, = self.batch_detection(
-                network,
+                self.network,
                 i,
-                class_names,
-                class_colors,
+                self.class_names,
+                self.class_colors,
             )
             return detections
 
@@ -139,26 +137,38 @@ if __name__ == '__main__':
         dest="video",
         required=True
     )
-    parser.add_argument(
-        '-b',
-        '--batchsize',
-        action="store",
-        type=int,
-        dest="batchsize",
-        default=4,
-    )
-    parser.add_argument(
-        '-t',
-        '--trash',
-        action="store",
-        type=float,
-        dest="trash",
-        default=0.25,
-    )
+    # parser.add_argument(
+    #     '-b',
+    #     '--batchsize',
+    #     action="store",
+    #     type=int,
+    #     dest="batchsize",
+    #     default=settings.BATCH_SIZE,
+    # )
+    # parser.add_argument(
+    #     '-t',
+    #     '--trash',
+    #     action="store",
+    #     type=float,
+    #     dest="trash",
+    #     default=settings.IMAGE_THRESHOLD,
+    # )
     parser.add_argument('-l', '--logfile', action="store", dest="logfile")
     arguments = parser.parse_args()
+    conf_path = settings.CONFIG_PATH
+    weight_path = settings.WEIGHT_PATH
+    data_file_path = settings.DATA_FILE_PATH
+    network, class_names, class_colors = darknet.load_network(
+        conf_path,
+        data_file_path,
+        weight_path,
+        batch_size=settings.BATCH_SIZE
+    )
     VideoParser(
-        arguments.batchsize,
+        settings.BATCH_SIZE,
         arguments.video,
-        arguments.trash
+        settings.IMAGE_THRESHOLD,
+        network,
+        class_names,
+        class_colors
     ).batch_detection_process()
