@@ -118,6 +118,7 @@ class VideoParser(object):
 
     def batch_detection_process(self):
         a = [item for item in self.read_video_file()]
+        predictions = []
         for i in a:
             images, detections, = self.batch_detection(
                 self.network,
@@ -125,7 +126,7 @@ class VideoParser(object):
                 self.class_names,
                 self.class_colors,
             )
-            return detections
+            predictions.append(detections)
 
 
 if __name__ == '__main__':
